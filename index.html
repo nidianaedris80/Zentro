@@ -1,0 +1,278 @@
+
+
+
+
+
+
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Zentro — Your Trading Starts Here</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #0b0b0f;
+      color: white;
+      font-family: Arial, sans-serif;
+    }
+    header {
+      background: #15151b;
+      padding: 24px;
+      border-bottom: 1px solid #d4af37;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .logo {
+      color: #d4af37;
+      font-size: 30px;
+      font-weight: bold;
+      letter-spacing: 3px;
+    }
+    .tag { color: #d4af37; font-size: 12px; }
+    main {
+      max-width: 1050px;
+      margin: auto;
+      padding: 35px 20px;
+    }
+    h1 { font-size: 36px; }
+    h2 { color: #d4af37; }
+    p { color: #aaa; line-height: 1.6; }
+    .gold { color: #d4af37; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 18px;
+      margin: 25px 0;
+    }
+    .card {
+      background: #191920;
+      padding: 25px;
+      border-radius: 14px;
+      border: 1px solid #333;
+    }
+    .balance {
+      font-size: 30px;
+      color: #d4af37;
+      font-weight: bold;
+      margin-top: 15px;
+    }
+    label { display: block; margin-top: 15px; }
+    input, select, button {
+      width: 100%;
+      padding: 13px;
+      margin-top: 10px;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    input, select {
+      background: #101015;
+      border: 1px solid #555;
+      color: white;
+    }
+    button {
+      background: #d4af37;
+      border: none;
+      color: #111;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button.secondary {
+      background: #383842;
+      color: white;
+    }
+    #message { color: #d4af37; }
+    li { padding: 6px; }
+    footer {
+      text-align: center;
+      color: #888;
+      padding: 30px;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">ZENTRO</div>
+  <div class="tag">PRACTICE TRADING</div>
+</header>
+
+<main>
+  <h1>Your Trading <span class="gold">Starts Here.</span></h1>
+  <p>Learn, practice, and build confidence with virtual money.</p>
+
+  <div class="grid">
+    <div class="card">
+      <div>Virtual Cash</div>
+      <div class="balance" id="cash">$100,000.00</div>
+    </div>
+    <div class="card">
+      <div>Position Value</div>
+      <div class="balance" id="holdings">$0.00</div>
+    </div>
+    <div class="card">
+      <div>Total Account Value</div>
+      <div class="balance" id="total">$100,000.00</div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>Practice Trading</h2>
+      <label for="asset">Choose Market</label>
+      <select id="asset">
+        <option value="GOLD">Gold — $2,000</option>
+        <option value="BTC">Bitcoin — $50,000</option>
+        <option value="SP500">S&amp;P 500 — $5,000</option>
+      </select>
+
+      <label for="quantity">Quantity</label>
+      <input id="quantity" type="number" value="1" min="0.001" step="any">
+
+      <button onclick="trade('buy')">BUY</button>
+      <button class="secondary" onclick="trade('sell')">SELL</button>
+      <p id="message"></p>
+    </div>
+
+    <div class="card">
+      <h2>My Positions</h2>
+      <ul id="positions">
+        <li>No positions yet.</li>
+      </ul>
+      <button class="secondary" onclick="resetAccount()">
+        Reset Practice Account
+      </button>
+    </div>
+  </div>
+
+  <p>Demo only. Prices are fictional and do not update with real markets. No real trades are placed.</p>
+</main>
+
+<footer>ZENTRO © 2026 | Practice Mode</footer>
+
+<script>
+  const prices = {
+    GOLD: 2000,
+    BTC: 50000,
+    SP500: 5000
+  };
+
+  const initialAccount = () => ({
+    cash: 100000,
+    positions: { GOLD: 0, BTC: 0, SP500: 0 }
+  });
+
+  let account = initialAccount();
+
+  try {
+    const saved = JSON.parse(localStorage.getItem("zentroAccount"));
+    if (
+      saved &&
+      Number.isFinite(saved.cash) &&
+      saved.positions &&
+      Object.keys(prices).every(
+        a => Number.isFinite(saved.positions[a]) &&
+             saved.positions[a] >= 0
+      )
+    ) {
+      account = saved;
+    }
+  } catch (error) {}
+
+  function money(value) {
+    return value.toLocaleString("en-US", {
+      style: "currency",
+      currency: "USD"
+    });
+  }
+
+  function updateScreen() {
+    let holdings = 0;
+    let list = "";
+
+    for (const asset of Object.keys(prices)) {
+      const quantity = account.positions[asset];
+      holdings += quantity * prices[asset];
+
+      if (quantity > 0) {
+        list += "<li>" + asset + ": " +
+          quantity.toFixed(4) + " units</li>";
+      }
+    }
+
+    document.getElementById("cash").textContent =
+      money(account.cash);
+    document.getElementById("holdings").textContent =
+      money(holdings);
+    document.getElementById("total").textContent =
+      money(account.cash + holdings);
+    document.getElementById("positions").innerHTML =
+      list || "<li>No positions yet.</li>";
+
+    try {
+      localStorage.setItem(
+        "zentroAccount",
+        JSON.stringify(account)
+      );
+    } catch (error) {}
+  }
+
+  function trade(side) {
+    const asset = document.getElementById("asset").value;
+    const quantity = Number(
+      document.getElementById("quantity").value
+    );
+    const message = document.getElementById("message");
+
+    if (!Number.isFinite(quantity) || quantity <= 0) {
+      message.textContent = "Enter a valid quantity.";
+      return;
+    }
+
+    const cost = quantity * prices[asset];
+
+    if (side === "buy") {
+      if (cost > account.cash) {
+        message.textContent = "Not enough virtual cash.";
+        return;
+      }
+      account.cash -= cost;
+      account.positions[asset] += quantity;
+    } else {
+      if (quantity > account.positions[asset]) {
+        message.textContent = "Not enough units to sell.";
+        return;
+      }
+      account.cash += cost;
+      account.positions[asset] -= quantity;
+    }
+
+    message.textContent =
+      "Practice " + side.toUpperCase() + " completed!";
+    updateScreen();
+  }
+
+  function resetAccount() {
+    if (confirm("Reset your practice account?")) {
+      account = initialAccount();
+      document.getElementById("message").textContent =
+        "Practice account reset.";
+      updateScreen();
+    }
+  }
+
+  updateScreen();
+</script>
+
+</body>
+</html>
